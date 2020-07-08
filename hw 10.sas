@@ -1,0 +1,127 @@
+/* Hw10  14 Assignment, Summary Reports 1 */
+/* Yuyu Fan */
+
+libname prg1 '/courses/d649d56dba27fe300/STA5066';
+/* 1 */
+title "Unique Customers and Salespersons for Retail Sales";
+PROC FREQ data= prg1.orders ;
+ where Order_Type=1;
+ tables Customer_ID  Employee_ID /nocum ;
+ Run;
+ 
+title "Unique Customers for Catalog and Internet";
+PROC FREQ data= prg1.orders ;
+ where Order_Type ne 1;
+ tables Customer_ID  Employee_ID /nocum ;
+ Run;
+ 
+
+/* 2 */
+proc format; 
+value ordertypes 1=’Retail’ 2=’Catalog’ 3=’Internet’; 
+run; 
+PROC FREQ data=prg1.orders ;
+ tables Order_Date ;
+ format Order_Date YEAR4. ;
+ Run;
+PROC FREQ data=prg1.orders ;
+ tables Order_Type/ nocum nopercent;
+ format Order_Type ordertypes.;
+ Run;
+PROC FREQ data=prg1.orders ;
+ tables Order_Date*Order_Type/ crosslist nocol nocum nopercent;
+ format Order_Date YEAR4. Order_Type ordertypes.;
+ Run; 
+ 
+/* 3 */
+ods output onewayfreqs=counts;
+proc freq data=prg1.order_fact;
+tables Product_ID;
+run;
+data merg7e;
+merge counts prg1.product_list;
+by Product_id;
+run;
+proc sort data=merg7e;
+by descending frequency ;
+run;
+proc print data=merg7e (obs=10);
+run;
+
+/* 4 */
+proc format; 
+value ordertypes 1=’Retail’ 2=’Catalog’ 3=’Internet’; 
+run; 
+
+title "Revenue (in U.S. Dollars) Earned from All Orders";
+PROC MEANS data= prg1.order_fact;
+var Total_Retail_Price;
+class Order_Date  Order_Type;
+Output out = work.sums
+ sum=sumTotal_retail_price;
+format  Order_Date YEAR4.  Order_Type ordertypes. ;
+Run;
+
+
+/* 5 */
+title "Number of Missing and Non-Missing Date Values";
+PROC MEANS data= prg1.staff maxdec=1 N NMISS nonobs ;
+var Birth_Date Emp_Hire_Date Emp_Term_Date;
+class Gender;
+Run;
+
+
+/* 6 */
+PROC MEANS data= prg1.order_fact;
+var Total_Retail_Price;
+class Product_Id;
+ output out= total_sum
+ sum =sumTotal_Retail_Price; 
+Run;
+data new_merged;
+merge total_sum p rg1.product_list;
+by product_Id;
+Run;
+proc sort data=new_merged;
+by descending sumTotal_Retail_Price ;
+run;
+proc print data= new_merged (obs=10);
+format sumTotal_retail_price ;
+run;
+
+
+/* 7 */
+libname NH "/courses/d0f434e5ba27fe300/5066/Nhanes3" access=readonly;
+data work.AnalysisTmp;
+ set NH.Analysis;
+ keep seqn dmaracer dmarethn dmaethnr hssex hsageir ;
+Run;
+PROC FREQ data=work.AnalysisTmp;
+  table dmaracer  dmarethn  hssex /nocum nopercent;
+run;
+PROC FREQ data=work.AnalysisTmp;
+  table dmaracer  dmarethn  hssex /nocum nopercent;
+  where hssex=2 and hsageir lt 50;
+run;
+proc format; 
+  value agef 
+     low-<45="<45"
+     45-59="45-59"
+     60-high="60+";
+Run;
+PROC FREQ data=work.AnalysisTmp;
+  table (dmaracer dmarethn hssex)*hsageir /crosslist;
+  format hsageir agef.;
+Run;
+
+/* 8 */ 
+PROC UNIVARIATE data= sashelp.heart;
+var cholesterol ;
+histogram cholesterol/normal;
+inset mean(5.1) std(5.1) n/position=ne;
+Run;
+PROC UNIVARIATE data= sashelp.heart;
+var cholesterol ;
+qqplot  cholesterol;
+inset mean(5.1) std(5.1) n/position=n;
+Run;

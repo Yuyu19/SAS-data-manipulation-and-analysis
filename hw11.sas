@@ -1,0 +1,126 @@
+/* Hw11  15 Assignment, Summary Reports 2 */
+/* Yuyu Fan */
+
+libname orion '/courses/d649d56dba27fe300/STA5066';
+/* 1 */
+title "Orion Star Sales Analysis";
+proc means data=orion.order_fact;
+   where Order_Type=2;
+   var Total_Retail_Price;
+   title2 "Catalog Sales Only";
+   footnote "Based on the previous day's posted data";
+run;
+title;
+footnote;
+
+proc means data=orion.order_fact;
+   where Order_Type=3;
+   var Total_Retail_Price;
+    title "Orion Star Sales Analysis";
+   title2 "Internet Sales Only";
+run;
+title;
+
+
+/* 2 */
+%let currentdate=%sysfunc(today(),worddate.);
+%let currenttime=%sysfunc(time(),timeampm7.);
+title "Sales Report as of &currenttime on &currentdate ";
+proc means data=orion.order_fact;
+   var Total_Retail_Price;
+run;
+title;
+
+
+/* 3 */
+proc print data=orion.customer;
+   where Country='TR';
+   title 'Customers from Turkey';
+   var Customer_ID Customer_FirstName Customer_LastName
+       Birth_Date;
+   label Customer_id='Customer ID' 
+         Customer_FirstName='First/Inital'
+         Customer_lastname='Last/Name' 
+         Birth_date='Birth Year';
+   format birth_date year4. customer_ID z6.  Customer_firstname $char1.;
+run;
+
+
+/* 4 */
+Proc format;
+  value $gender  'F' = 'Female'
+                 'M' = 'Male';
+  value  moname   1='January'
+   		 2='February'
+   		 3='March';
+run;
+            
+data Q1Birthdays;
+   set orion.employee_payroll;
+   BirthMonth=month(Birth_Date);
+   if BirthMonth le 3;
+run;
+
+proc freq data=Q1Birthdays;
+   tables BirthMonth Employee_Gender;
+   title 'Employees with Birthdays in Q1';
+   format Employee_Gender $gender.   BirthMonth moname.;
+run; 
+
+
+/* 5 */
+Proc format;
+  value $gender  'F' = 'Female'
+                 'M' = 'Male'
+                 other = 'Invalid code';
+  value  salrange     20000 -< 100000 = 'Below $100,000'
+               100000 - 500000= '$100,000 or more'
+              .	= 'Missing salary'
+              other = 'Invalid salary';
+
+run;
+
+proc print data=orion.nonsales;
+   var Employee_ID Job_Title Salary Gender;
+   title1 'Distribution of Salary and Gender Values';
+   title2 'for Non-Sales Employees';
+   format Gender $gender.  Salary salrange.;
+run;
+
+
+/* 6 */
+proc sort data=orion.order_fact out=sort;
+by Order_type;
+run;
+
+proc means data=sort;
+   where Order_type=2 or order_type=3;
+   var Total_Retail_Price;
+   by order_type;
+   title 'Orion Star Sales Summary';
+run;
+title;
+
+
+/* 7 */
+proc sort data=orion.order_fact out=sort;
+by Order_type descending Order_Date;
+run;
+
+proc print data=sort;
+   var Order_ID Order_Date Delivery_Date ;
+   title1 'Orion Star Sales Details';
+   by order_type;
+   where (order_date ge '01Jan2005'd and order_date le '30Apr2005'd) and (Delivery_date-Order_date=2);
+   title2 '2-Day Deliveries from January to April 2005';
+run;
+title;
+
+
+/* 8 */
+proc tabulate data=orion.customer_dim;
+title 'Ages of Customers by Group and Gender';
+class Customer_group Customer_gender;
+var customer_age;
+table customer_group all,customer_gender*customer_age*(n(Mean));
+run;
