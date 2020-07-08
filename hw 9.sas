@@ -1,0 +1,270 @@
+/* HW 11:  Macro Variables */
+/* Yuyu Fan */
+%let path=/courses/d649d56dba27fe300/STA5067/SAS Data;
+libname orion "&path/orion";
+
+
+/* 1 */
+%PUT _automatic_; 
+
+/* 2 */
+/* a */
+PROC SORT data= orion.customer out=syslast;
+by Country;
+Run;
+/* b */
+proc print data=&syslast;
+title "listing of &syslast";
+run;
+
+/* 3 */
+/* a */ 
+data new;
+   set orion.customer;
+run;
+work.new;
+
+/* b */
+proc print data=orion.customer;
+run;
+WORK._NULL_;
+
+/* 4 */
+/* a */ 
+proc print data=orion.employee_payroll;
+   format Birth_Date Employee_Hire_Date date9.;
+run;
+
+/* b */
+proc print data=orion.employee_payroll;
+     format Birth_Date Employee_Hire_Date date9.;
+     where Employee_Hire_Date between "01jan2007"d and "&sysdate9"d;
+run;
+
+
+/* 5 */
+/* a */
+proc print data=orion.customer_dim;
+   var Customer_Name Customer_Gender Customer_Age;
+   where Customer_Group contains 'Gold';
+   title 'Gold Customers';
+run;
+
+/* b */
+%let type = Gold;
+proc print data=orion.customer_dim;
+   var Customer_Name Customer_Gender Customer_Age;
+   where Customer_Group contains "&type";
+   title "&type Customers";
+run;
+
+/*c*/
+options symbolgen;
+%let type=Gold;
+proc print data=orion.customer_dim;
+   var Customer_Name Customer_Gender Customer_Age;
+   where Customer_Group contains "&type";
+   title "&type Customers";
+run; 
+
+/*d*/
+%let type=Internet;
+proc print data=orion.customer_dim;
+   var Customer_Name Customer_Gender Customer_Age;
+   where Customer_Group contains "&type";
+   title "&type Customers";
+run; 
+title;
+
+/*e*/
+options nosymbolgen;
+
+
+/* 6 */
+/* a */
+%let type=Gold;
+proc print data=orion.customer_dim;
+   var Customer_Name Customer_Gender Customer_Age;
+   where Customer_Group contains "&type"
+   and Customer_Age between 30 and 4;
+   title "&type Customers";
+run;
+
+/* b */
+%let type=Gold;
+%let AGE1=30;
+%let AGE2=45;
+proc print data=orion.customer_dim;
+   var Customer_Name Customer_Gender Customer_Age;
+   where Customer_Group contains "&type"
+     and Customer_Age between &AGE1 and &AGE1;;
+   title "&type Customers";
+run;
+
+/*c*/
+options symbolgen;
+%let type=Gold;
+%let AGE1=30;
+%let AGE2=45;
+proc print data=orion.customer_dim;
+   var Customer_Name Customer_Gender Customer_Age;
+   where Customer_Group contains "&type"
+     and Customer_Age between &AGE1 and &AGE1;;
+   title "&type Customers";
+run;
+
+/* d */
+%let type=Gold;
+%let AGE1=25;
+%let AGE2=40;
+proc print data=orion.customer_dim;
+   var Customer_Name Customer_Gender Customer_Age;
+   where Customer_Group contains "&type"
+     and Customer_Age between &AGE1 and &AGE1;;
+   title "&type Customers";
+run;
+
+/* e */
+options nosymbolgen;
+
+
+/* 7 */
+/* a */
+%let pet1=Paisley;
+%let pet2=Sitka;
+
+/* b */
+%let pet1=Paisley;
+%let pet2=Sitka;
+%symdel pet1 pet2;
+
+/* c */
+%let pet1=Paisley;
+%let pet2=Sitka;
+%symdel pet1 pet2;
+%put _user_;
+
+
+/* 8 */
+/* a */
+proc print data=orion.employee_payroll;
+where Employee_Hire_Date='01AUG2006'd;
+id Employee_ID;
+var Employee_Gender Employee_Hire_Date;
+title 'Personal Information for Employees Hired in AUG 2006';
+run;
+
+/* b */
+%let MONTH=AUG;
+%let YEAR=2006;
+proc print data=orion.employee_payroll;
+where Employee_Hire_Date="01&MONTH&YEAR"d;
+id Employee_ID;
+var Employee_Gender Employee_Hire_Date;
+title 'Personal Information for Employees Hired in AUG 2006';
+run;
+
+/* c */
+%let MONTH=JUL;
+%let YEAR=2003;
+proc print data=orion.employee_payroll;
+where Employee_Hire_Date="01&MONTH&YEAR"d;
+id Employee_ID;
+var Employee_Gender Employee_Hire_Date;
+title 'Personal Information for Employees Hired in AUG 2006';
+run;
+
+
+/* 9 */
+/* a */
+proc sort data=orion.staff out=staffhires;
+   by Job_Title Emp_Hire_Date;
+run;
+data FirstHired;   
+   set staffhires;
+   by Job_Title;
+   if First.Job_Title;  
+run;
+proc print data=FirstHired;
+   id Job_Title;
+   var Employee_ID Emp_Hire_Date;
+   title "First Employee Hired within Each Job Title";  
+run;
+
+/* b */
+%let a=First;
+proc sort data=mac1.staff out=staffhires;
+   by Job_Title Emp_Hire_Date;
+run;
+data &a.Hired;   
+   set staffhires;
+   by Job_Title;
+   if &a..Job_Title;  
+run;
+proc print data=&a.Hired;
+   id Job_Title;
+   var Employee_ID Emp_Hire_Date;
+   title "&a Employee Hired within Each Job Title";  
+run;
+
+/* c */
+%let a=Last;
+proc sort data=mac1.staff out=staffhires;
+   by Job_Title Emp_Hire_Date;
+run;
+data &a.Hired;   
+   set staffhires;
+   by Job_Title;
+   if &a..Job_Title;  
+run;
+proc print data=&a.Hired;
+   id Job_Title;
+   var Employee_ID Emp_Hire_Date;
+   title "&a Employee Hired within Each Job Title";  
+run;
+
+
+/* 10 */
+%LET FULLNAME= Anthony Miller;
+%put %substr(&FULLNAME,1,1).%scan(&FULLNAME,-1,' ');
+
+/* 11 */
+%put %sysfunc(today(),mmddyyp10.);
+%put %sysfunc(time(),timeampm.);
+
+
+/* 12 */
+/* a */
+proc print data=orion.product_dim;
+   where Product_Name contains "Jacket";
+   var Product_Name Product_ID Supplier_Name;
+   title "Product Names Containing 'Jacket'";
+run;
+
+/* b */ 
+%let product=%nrstr(R&D);
+proc print data=orion.product_dim;
+     where Product_Name contains "&product";
+     var Product_Name Product_ID Supplier_Name;
+     title "Product Names Containing '&product'";
+run;
+
+/* c */ 
+%let product=%nrstr(R&D);
+proc print data=mac1.product_dim;
+     where Product_Name contains "&product";
+     var Product_Name Product_ID Supplier_Name;
+     %qtrim(title1 Product Names Containing "&product");
+     %trim(title2 "Report generated at %sysfunc(time(),timeampm.)");
+     %trim(title3 "on %sysfunc(today(),mmddyyp10.)");
+run;
+title;
+
+
+/* 13 */
+%let DSN=work.test;
+%let FIRST=%SUBSTR(&DSN,1,1);
+%let ckbegin=%verify(&first,"w");
+%put The value of ckbegin= &ckbegin;
+%let ckbegin=%verify(&first,"");
+%put The value of ckbegin= &ckbegin;

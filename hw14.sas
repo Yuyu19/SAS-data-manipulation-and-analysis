@@ -1,0 +1,113 @@
+/* HW 14 Macro SQL Interface */
+/* Yuyu Fan */
+%let path=/courses/d649d56dba27fe300/STA5067/SAS Data;
+libname orion "&path/orion";
+
+/* 1 */
+/* a */
+%let start=01Jan2007;
+%let stop=31Dec2007;
+proc means data=orion.order_fact noprint;
+   var Total_Retail_Price;
+   output out=stats n=count mean=avg;
+   run;
+data _null_;
+   set stats;
+   call symputx('orders',count);
+   call symputx('average',avg);
+run;
+
+proc gchart data=orion.order_fact;
+   vbar3d Order_Type 
+      / patternid=midpoint cframe=w shape=c discrete
+        sumvar=Total_Retail_Price type=mean ref=&average;
+   format Total_Retail_Price dollar4.;
+   label Total_Retail_Price='Average Order';
+   title1 h=1 "Report from &start to &stop";
+   title2 h=1 f=swiss "Orders this period: " c=b "&orders";
+   footnote1 h=1 f=swiss "Overall Average: " c=b 
+      "%sysfunc(putn(&average,dollar4.))";
+run;
+quit;
+
+
+/* b */
+proc sql noprint;
+select count(Total_Retail_Price), mean(Total_Retail_Price)
+into :orders, :average
+from orion.order_fact;
+quit;
+
+/* c */
+%let orders= %sysfunc(compress(&orders));
+%let average= %sysfunc(compress(&average));
+%put Count of Total_Retail_Price:&orders;
+%put Mean of Total_Retail_Price:&average;
+
+/* d */
+proc gchart data=orion.order_fact;
+   vbar3d Order_Type 
+      / patternid=midpoint cframe=w shape=c discrete
+        sumvar=Total_Retail_Price type=mean ref=&average;
+   format Total_Retail_Price dollar4.;
+   label Total_Retail_Price='Average Order';
+   title1 h=1 "Report from &start to &stop";
+   title2 h=1 f=swiss "Orders this period: " c=b "&orders";
+   footnote1 h=1 f=swiss "Overall Average: " c=b 
+      "%sysfunc(putn(&average,dollar4.))";
+run;
+quit;
+
+/* e */
+proc sql noprint;
+select count(Total_Retail_Price), mean(Total_Retail_Price), mean(Total_Retail_Price) format=dollar4.
+into :orders, :average, :fmtavg
+from orion.order_fact;
+quit;
+%let orders= %sysfunc(compress(&orders));
+%let average= %sysfunc(compress(&average));
+%let fmtavg= %sysfunc(compress(&fmtavg));
+
+/* f */
+proc gchart data=orion.order_fact;
+   vbar3d Order_Type 
+      / patternid=midpoint cframe=w shape=c discrete
+        sumvar=Total_Retail_Price type=mean ref=&average;
+   format Total_Retail_Price dollar4.;
+   label Total_Retail_Price='Average Order';
+   title1 h=1 "Report from &start to &stop";
+   title2 h=1 f=swiss "Orders this period: " c=b "&orders";
+   footnote1 h=1 f=swiss "Overall Average: " c=b 
+      "&fmtavg";
+run;
+quit;
+
+/* 2 */
+proc sql outobs=3;
+   select customer_id
+   into:TOP3 separated by ', '
+      from orion.order_fact
+      group by Customer_ID
+ order by Total_Retail_Price descending;
+quit;
+
+%put &TOP3;
+
+
+/* 3 */
+proc sql noprint;
+select count(*) into: nrow
+from orion.customer_type;
+quit;
+
+proc sql;
+select Customer_Type 
+into: CTYPE1 - : %sysfunc(catx( ,CTYPE,&nrow))
+from orion.customer_type;
+quit;
+
+proc sql;
+select name, value
+from dictionary.macros
+where name like "CTYPE%";
+quit;

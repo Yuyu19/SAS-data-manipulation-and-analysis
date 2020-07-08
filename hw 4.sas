@@ -1,0 +1,122 @@
+/* Hw4  SQL Joins */
+/* Yuyu Fan */
+
+
+%let path=/courses/d649d56dba27fe300/STA5067/SAS Data;
+libname orion "&path/orion";
+libname train "&path/train";
+
+/* 1 */
+proc sql;
+title "Employees with more than 30 years of service As of December 31, 2007";
+select Employee_Name label='Employee Name',
+       int(('31DEC2007'd - Employee_Hire_Date)/365.25) as YOS  label='Years Of Service'
+from  orion.Employee_Addresses 
+ inner join  orion.Employee_Payroll 
+ on Employee_Addresses.Employee_ID= Employee_Payroll.Employee_ID
+where calculated YOS > 30
+order by Employee_Name;
+Quit;
+
+
+
+/* 2 */
+proc sql;
+select Employee_Name as Name, City,Job_Title
+from orion.Sales
+  right join orion.Employee_Addresses
+  on Sales.Employee_ID = Employee_Addresses.Employee_ID
+order by City, Job_Title, Name;
+Quit;
+
+
+/* 3 */
+proc sql;
+title "US and Australian Internet Customers Purchasing Foreign Manufactured Products";
+select Customer_Name,count(quantity) as Purchases
+from orion.Order_Fact
+  inner join orion.Customer on Customer.Customer_ID =Order_Fact.Customer_ID
+  inner join orion.Product_Dim on Order_Fact.Product_ID = Product_Dim.Product_ID
+where Employee_ID = 99999999 and
+  Customer.Country in ("AU","US") and
+  Supplier_Country ne Customer.Country
+group by Customer_Name
+order by calculated Purchases DESC,Customer_Name;
+ QUit;
+
+/* 4 */
+proc sql;  
+create table work.managers as 
+select m.Employee_ID, Manager_ID, Employee_Name,
+int(('31DEC2007'd-Employee_Hire_Date)/365.25) as YOS
+from orion.Employee_Addresses as m, orion.Employee_Payroll as n, orion.Employee_Organization as p   
+where m.Employee_ID=n.Employee_ID=p.Employee_ID 
+and calculated YOS>30;
+quit;
+proc sql;
+title1 "Employees with More than 30 Years of Service";
+title2 "As of December 31, 2007 ";
+select m.Employee_Name label='Employee Name', YOS label='Years of Service', n.Employee_Name as Manager_Name label='Manager Name'
+from work.managers as m 
+left join
+orion.Employee_Addresses as n
+on Manager_Id=n.Employee_Id
+order by Manager_Name, 2 desc, Employee_Name
+;  
+quit;
+title;
+
+
+/* 5 */
+proc sql;
+title "US Employees";
+select Employee_Name,City, int(('31Dec2007'd-Birth_Date)/365.25) as Age,   Employee_Gender
+from orion.Employee_Addresses as m, orion.Employee_Payroll as n
+where m.Employee_ID=n.Employee_ID
+and country='US'
+order by 3, 2, 1;
+quit;
+
+
+/* 6 */
+proc sql;
+title "New Jersey Employees";
+select substr(firstname,1,1)||"."|| lastname as name, JobCode, Gender
+from train.staffmaster as m 
+inner join 
+train.payrollmaster as n
+on m.empid=n.empid 
+and State='NJ'
+order by Gender, JobCode;
+quit;
+
+
+/* 7 */
+data t1 t2;
+call streaminit(54321);
+do id=1,7,4,2,6,11,9;
+   chol=int(rand("Normal",240,40));
+   sbp=int(rand("Normal",120,20));
+output t1;
+end;
+do id1=2,1,5,7,3,9;
+   chol=int(rand("Normal",240,40));
+   sbp=int(rand("Normal",120,20));
+ output t2;
+end;
+run;
+title "t1";
+proc print data=t1 noobs;run;
+title "t2";
+proc print data=t2 noobs;run;
+title;
+
+
+proc sql;
+select t1.id,
+coalesce(t1.chol,t2.chol) as chol, 
+coalesce(t2.sbp,t1.sbp) as sbp
+from t1 inner join t2 
+on t1.id=t2.id1
+order by id;
+quit;

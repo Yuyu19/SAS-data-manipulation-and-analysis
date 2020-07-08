@@ -1,0 +1,96 @@
+/* Hw2  Displaying Query Results */
+/* Yuyu Fan */
+
+%let path= /courses/d649d56dba27fe300/STA5067/SAS Data;
+/* 1 */
+libname orion "&path/orion";
+title "Single Male Employee Salaries";
+Proc SQL;
+ select Employee_ID, Salary format = COMMA10.2, Salary * 1/3 as Tax format = COMMA10.2
+ from orion.employee_payroll
+ having Employee_Gender="M" and
+      marital_status="S" and
+      employee_term_date is not missing
+ order by Salary Desc;
+Quit;
+Title;
+
+/* 2 */
+title "Australian Clothing Products";
+Proc SQL;
+ select Supplier_Name label='Supplier', 
+        Product_Group label='Group', 
+        Product_Name  label= 'Product'
+ from orion.Product_dim
+ where Product_Category = "Clothes" and Supplier_Country = "AU"
+ order by Product_Name;
+ Quit;
+Title;
+
+
+/* 3 */
+
+ title "Customer Information After 2007";
+ Proc SQL;
+   select Customer_ID format = z6., Customer_LastName ,  Customer_FirstName,
+           Gender, 
+          int(('31DEC2007'd- Birth_Date)/365.25) as Age 
+   from orion.Customer 
+   where calculated Age >50
+   order by 5 desc,  Customer_LastName, Customer_FirstName
+   ;
+ Quit;
+ title;
+
+
+
+/* 4 */
+title "Cities Where Employees Live";
+Proc SQL;
+   select City,COUNT(*) as Count
+   from orion.Employee_Addresses
+   group by City
+   order by City;
+  Quit;
+  Title;
+
+/* 5 */  
+title "Age at Employment";
+Proc SQL;
+   select Employee_ID label='ID',
+          Birth_Date format=MMDDYY10. label='Birth Date', 
+          Employee_Hire_Date format=MMDDYY10. label='Hire Date',  
+          INT((Employee_Hire_Date - Birth_Date)/365.25) as Age
+   from orion.Employee_Payroll;
+Quit;
+Title;
+
+
+/* 6 */  
+title "Customer Demographics: Gender by Country";
+Proc SQL;
+   select COUNT(*) as Customer_number,
+          sum(Gender="F") as FemaleNumber,
+          sum(Gender="M") as MaleNumber ,
+          calculated MaleNumber/calculated Customer_number "Percent Male"
+   from orion.Customer
+   group by country
+   order by calculated MaleNumber/calculated Customer_number 
+  ;
+Quit;
+Title;
+
+
+/* 7 */
+title "Countries with more Female than Male Customers";
+Proc SQL;
+  select Country, 
+   sum(Gender="F") as m1 label='Female Customers',
+   sum(Gender="M") as m2 label='Male Customers' 
+  from orion.Customer
+  group by Country
+  having calculated m1>calculated m2
+  order by m1 desc;
+Quit;
+Title;
+  
